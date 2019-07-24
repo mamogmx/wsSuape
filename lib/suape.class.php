@@ -203,7 +203,6 @@ class suape{
             "idente: ".self::ente,
             "Content-Type: application/json",
             "cache-control: no-cache",
-            //'Postman-Token: 15996e83-7db5-4214-8a60-49dcf96437cf {"verifica": true,"notifica": false}'
         );
         $res = Array("succes"=>1,"result"=>Array());
         if(!$idProc){
@@ -221,7 +220,7 @@ class suape{
             $rr = self::callService($url, $headers, $postData, $key);
             $res["result"][$idProc] = $rr["result"];
         }
-        
+        print "Stato Pratica\n";
         return $res;
     }
 

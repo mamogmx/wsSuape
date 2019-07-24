@@ -53,11 +53,12 @@ for($i=0;$i<count($res["data"]);$i++){
     $result[]=$r;
     $idsArr[]=$res["data"][$i]["idPratica"];
 }*/
-//$res = suape::getListaStatoPratica();
+
+$res = suape::getListaStatoPratica();
 //$res = suape::getListaTipoParere();
 //$res = suape::getListaSportelli();
 //$res = suape::getListaEndoProcedimenti();
-$res = suape::getDatiPratica($idPratica);
+//$res = suape::getDatiPratica($idPratica);
 //$res = suape::getModuloPratica($idPratica,$idModulo);
 //$res = suape::getListaModuliPratica($idPratica);
 //$res = suape::getListaComunicazioniPratica($idPratica);
