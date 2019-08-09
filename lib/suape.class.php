@@ -74,10 +74,12 @@ class suape{
         "protocollo" => Array(),
         "riferimento" => Array()
     );
-    
+
+/*Metodo che restituisce data e ora attuali*/    
     static function now(){
         return date('Y-m-d h:i:s', time());
-    }    
+    }   
+    
 /*Metodo di debug*/
     static function debug($file,$data,$mode='a+'){
         $now=self::now();
@@ -91,12 +93,19 @@ class suape{
         fwrite($f,$result."\n-------------------------\n");
         fclose($f);
     }  
+    
+/*metodo che restituisce la connessione al DB*/    
+    static function getDB(){
+        $dbh = new PDO(self::dsn);
+        return $dbh;
+    }
 /*Metodo che restituisce l'autenticazione da passare negli header*/    
     static function getAuAuth() {
         $d = date("Ymd");
         $AuAuth = hash("sha256",self::key.$d);
         return $AuAuth;
     }
+    
 /*Metodo che verifica la correttezza sintattica del datetime inserito*/    
     static function checkDateTime($date){
         
@@ -162,8 +171,21 @@ class suape{
         return $res;
     }
     
-    static function getListaInterventi(){
-        $key="inteventis";
+    static function insertTipiSettori($data){
+        $dbh = self::getDB();
+        $sql = "INSERT INTO pe.e_settori(codice,nome,settore_padre) VALUES(?,?,?);";
+        $stmt = $dbh->prepare($sql);
+        
+        for($i=0;$i<count($data);$i++){
+            $values=Array($data[$i]["idSettore"],$data[$i]["nome"],$data[$i]["idSettorePadre"]);
+            if(!$stmt->execute($values)){
+                echo "Errore nell'inserimento del procedimento ".$data[$i]["nome"]."\n";
+            }
+        }
+    }    
+    
+    static function getListaInterventi($settore=""){
+        $key="interventis";
         $url = sprintf(self::baseURL,"getListaInterventi");
         $AuAuth = self::getAuAuth();
         $headers = array(
@@ -173,10 +195,25 @@ class suape{
             "cache-control: no-cache",
             //'Postman-Token: 15996e83-7db5-4214-8a60-49dcf96437cf {"verifica": true,"notifica": false}'
         );
-        $postData='{"settore":""}';
+        $postData=sprintf('{"settore":"%s"}',$settore);
         $res = self::callService($url, $headers, $postData, $key);
         return $res;
     }
+    
+    static function insertTipiInterventi($data){
+        $dbh = self::getDB();
+        $sql = "INSERT INTO pe.e_intervento(codice,nome,descrizione,settore_padre) VALUES(?,?,?,?);";
+        $stmt = $dbh->prepare($sql);
+        
+        for($i=0;$i<count($data);$i++){
+            $values=Array($data[$i]["idIntervento"],$data[$i]["titolo"],$data[$i]["titolo"],$data[$i]["idSettorePadre"]);
+            if(!$stmt->execute($values)){
+                $err = $stmt->errorInfo();
+                $message=sprintf("Errore : %s nell'inserimento del procedimento %s\n",$err[2],$data[$i]["titolo"]);
+                echo $message;
+            }
+        }
+    }   
     
     static function getListaEsitoParere(){
         $key="esitoPareres";
@@ -192,6 +229,21 @@ class suape{
         $postData='{}';
         $res = self::callService($url, $headers, $postData, $key);
         return $res;
+    }
+    
+    static function insertEsitiPareri($data){
+        $dbh = self::getDB();
+        $sql = "INSERT INTO pe.e_esiti(id,codice,nome) VALUES(?,?,?);";
+        $stmt = $dbh->prepare($sql);
+        
+        for($i=0;$i<count($data);$i++){
+            $values=Array($data[$i]["idEsito"],'---',$data[$i]["denominazione"]);
+            if(!$stmt->execute($values)){
+                $err = $stmt->errorInfo();
+                $message=sprintf("Errore : %s nell'inserimento di %s\n",$err[2],$data[$i]["titolo"]);
+                echo $message;
+            }
+        }
     }
     
     static function getListaStatoPratica($idProc=""){
@@ -239,6 +291,20 @@ class suape{
         $res = self::callService($url, $headers, $postData, $key);
         return $res;
     }
+    
+    static function insertTipiProcedimento($data){
+        $dbh = self::getDB();
+        $sql = "INSERT INTO pe.e_tipopratica(id,nome,classe,menu_default,menu_file) VALUES(?,?,?,?,?);";
+        $stmt = $dbh->prepare($sql);
+        $menuFile="pratica";
+        $menuDefault="10,20,40,50,70,80,92,110,100,90,91,135,210,250,260,280,295,300,293,305,160,170,285";
+        for($i=0;$i<count($data);$i++){
+            $values=Array($data[$i]["idProcedimento"],$data[$i]["denominazione"],$data[$i]["idClasseProcedimento"],$menuDefault,$menuFile);
+            if(!$stmt->execute($values)){
+                echo "Errore nell'inserimento del procedimento ".$data[$i]["idProcedimento"]."\n";
+            }
+        }
+    }
 
     static function getListaSportelli(){
         $key="sportellis";
@@ -256,6 +322,19 @@ class suape{
         return $res;
     }
 
+    static function insertTipiSportello($data){
+        $dbh = self::getDB();
+        $sql = "INSERT INTO pe.e_sportelli(codice,nome,codice_aoo,codice_suape,identificativo_suape) VALUES(?,?,?,?,?);";
+        $stmt = $dbh->prepare($sql);
+        
+        for($i=0;$i<count($data);$i++){
+            $values=Array($data[$i]["idSportello"],$data[$i]["denominazione"],$data[$i]["codiceAOO"],$data[$i]["codiceSUAPE"],$data[$i]["identificativoSUAPE"]);
+            if(!$stmt->execute($values)){
+                echo "Errore nell'inserimento del procedimento ".$data[$i]["denominazione"]."\n";
+            }
+        }
+    }
+    
     static function getListaTipoParere(){
         $key="listaTipoPareres";
         $url = sprintf(self::baseURL,"getListaTipoParere");
@@ -287,6 +366,7 @@ class suape{
         $res = self::callService($url, $headers, $postData, $key);
         return $res;
     }
+    
     static function listaPratiche($from, $to=""){
         $AuAuth = self::getAuAuth();
         $url = sprintf(self::baseURL,"getListaPratiche");
@@ -353,6 +433,7 @@ class suape{
         //if ($data && array_key_exists("esito",$data) && $data["esito"]["valore"]==1){
         if($rr["success"]===1){
             $data = $rr["result"];
+            
             $praticaDir = self::dir.$data["idPratica"].DIRECTORY_SEPARATOR;
             
             /*Creazione della directori della pratica*/
@@ -372,7 +453,10 @@ class suape{
             
             $fName = self::debugDir."moduloAgid.debug";
             $xmlData = json_decode(json_encode($xml),TRUE);
-            print_r(xmlAgid::getRichiedente($xmlData));return;
+            /*print_r(xmlAgid::getIndirizzo($xmlData));
+            print_r(xmlAgid::getCT($xmlData));
+            print_r(xmlAgid::getCU($xmlData));
+            print_r(xmlAgid::getRichiedente($xmlData));*/
             /*Inserimento del modello di riepilogo*/
             $text = base64_decode($data["modelloRiepilogo"]);
             $f = fopen($praticaDir."modello_riepilogo.pdf","w+");
@@ -417,12 +501,13 @@ class suape{
             $rrr = self::getModuloPratica($data["idModulo"], $idPratica,$data);
             if ($rrr["success"]===1){
                 $res["result"][] = $rrr["result"];
-                self::inserisciRecord("pe.allegati", $data);
+                self::inserisciRecord("pe.file_allegati", $data);
             }
         }
         return $res;
         
     }
+    
     static function getModuloPratica($id,$idPratica,$info){
         $AuAuth = self::getAuAuth();
         $url = sprintf(self::backOfficeURL,"getModuloPratica");
@@ -484,6 +569,7 @@ class suape{
         }
         return $res;
     }
+    
     static function getAllegatoPratica($id,$idPratica){
         $AuAuth = self::getAuAuth();
         $url = sprintf(self::backOfficeURL,"getAllegatoPratica");
@@ -558,6 +644,7 @@ class suape{
         if($res["success"]===1){        
             $praticaDir = self::dir.$idPratica.DIRECTORY_SEPARATOR."comunicazioni".DIRECTORY_SEPARATOR;
             $data = $res["result"];
+            
             self::inserisciRecord("pe.comunicazioni", $data);
             for($i=0;$i<count($data);$i++){
                 for($j=0;$j<count($data[$i]["documentos"]);$j++){
@@ -620,7 +707,7 @@ class suape{
             
             $praticaDir = self::dir.$idPratica.DIRECTORY_SEPARATOR."pareri".DIRECTORY_SEPARATOR;
             $data = $res["result"];
-            
+            //print_r($data);
             for($i=0;$i<count($data);$i++){
                 $ff = $data[$i];
                 $mess = sprintf("\t%d) Considero il Parere %s della comunicazione %s\n",$i,$ff["idFile"],$id);

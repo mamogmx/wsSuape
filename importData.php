@@ -37,11 +37,13 @@ $ids=Array(
     "9ce085fe-7baa-42ae-98cd-b05a0246bab8",
     "39065fa0-12ea-496a-89ef-3eda62365322"
 );
-$idPratica = $ids[10];
+$idPratica = $ids[3];
 $idAllegato=14942322;
 $idModulo = 14860196;
 $idComunicazione = 13661986;
-//$res = suape::listaPratiche("2019-03-01T00:00:00");
+//$res = suape::listaPratiche("2019-03-01T00:00:00","2019-08-09T00:00:00");
+
+//print_r($res);die();
 $unusedKeys=Array("idIter","interventis","codiceFiscale","mudulis","pareris","allegatis","modelloRiepilogo","moduliXMLs","moduliJSONs","vecchiFormato","xmlpratica");
 $usedKeys=Array("idPratica","codice","idStatoPratica","protocollo","dataInoltro","dataUltimaIntegrazione");
 /*
@@ -54,10 +56,28 @@ for($i=0;$i<count($res["data"]);$i++){
     $idsArr[]=$res["data"][$i]["idPratica"];
 }*/
 
-$res = suape::getListaStatoPratica();
-//$res = suape::getListaTipoParere();
+//$res = suape::getListaStatoPratica();
+$res = suape::getListaEsitoParere();
+if($res["success"]==1){
+    suape::insertEsitiPareri($res["result"]);
+}
 //$res = suape::getListaSportelli();
+//if($res["success"]==1){
+//    suape::insertTipiSportello($res["result"]);
+//}
 //$res = suape::getListaEndoProcedimenti();
+//$res = suape::getListaTipoProcedimento();
+//if($res["success"]==1){
+//    suape::insertTipiProcedimento($res["result"]);
+//}
+//$res = suape::getListaInterventi();
+//if($res["success"]==1){
+ //   suape::insertTipiInterventi($res["result"]);
+//}
+//$res = suape::getListaSettori();
+//if($res["success"]==1){
+//    suape::insertTipiSettori($res["result"]);
+//}
 //$res = suape::getDatiPratica($idPratica);
 //$res = suape::getModuloPratica($idPratica,$idModulo);
 //$res = suape::getListaModuliPratica($idPratica);
